@@ -29,7 +29,7 @@ def read_args():
         description='Training a MLP on the petfinder dataset')
     # Here you have some examples of classifier parameters. You can add
     # more arguments or change these if you need to.
-    parser.add_argument('--dataset_dir', default='../petfinder_dataset', type=str,
+    parser.add_argument('--dataset_dir', default='./', type=str,
                         help='Directory with the training and test files.')
     parser.add_argument('--hidden_layer_sizes', nargs='+', default=[100], type=int,
                         help='Number of hidden units of each hidden layer.')
