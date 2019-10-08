@@ -18,7 +18,7 @@ import pandas
 import tensorflow as tf
 
 from sklearn.model_selection import train_test_split
-from tensorflow.keras import layers, models
+from tensorflow.keras import layers, models, Sequential
 
 
 TARGET_COL = 'AdoptionSpeed'
@@ -120,7 +120,14 @@ def main():
         test_dataset, one_hot_columns, numeric_columns, embedded_columns, test=True)[0]).batch(batch_size)
 
     # TODO: Build the Keras model
-    # model = ....
+    model = tf.keras.Sequential([
+        layers.Dense(10, input_shape=(10,), batch_size=batch_size, activation=tf.nn.relu),
+        layers.BatchNormalization(momentum=0),
+        layers.Dropout(0.5),
+        layers.Dense(10, activation='softmax')
+    ])
+    model.compile(loss='categorical_crossentropy',
+              metrics=['accuracy'])
 
     # TODO: Fit the model
     mlflow.set_experiment(args.experiment_name)
@@ -134,7 +141,7 @@ def main():
         mlflow.log_param('epochs', args.epochs)
 
         # Train
-        # history = model.fit(train_ds, epochs=args.epochs)
+        history = model.fit(train_ds, epochs=args.epochs)
 
         # TODO: analyze history to see if model converges/overfits
         
@@ -143,8 +150,8 @@ def main():
         # already compiled with the metrics.
         # performance = model.evaluate(X_test, y_test)
 
-        loss, accuracy = 0, 0
-        # loss, accuracy = model.evaluate(dev_ds)
+        # loss, accuracy = 0, 0
+        loss, accuracy = model.evaluate(dev_ds)
         print("*** Dev loss: {} - accuracy: {}".format(loss, accuracy))
         mlflow.log_metric('loss', loss)
         mlflow.log_metric('accuracy', accuracy)
