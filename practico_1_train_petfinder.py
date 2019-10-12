@@ -20,7 +20,6 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from tensorflow.keras import layers, models, Sequential
 
-
 TARGET_COL = 'AdoptionSpeed'
 
 
@@ -57,7 +56,7 @@ def process_features(df, one_hot_columns, numeric_columns, embedded_columns, tes
     # TODO Create and append numeric columns
     # Don't forget to normalize!
     # ....
-    
+
     # Concatenate all features that don't need further embedding into a single matrix.
     features = {'direct_features': numpy.hstack(direct_features)}
 
@@ -71,22 +70,20 @@ def process_features(df, one_hot_columns, numeric_columns, embedded_columns, tes
         targets = tf.keras.utils.to_categorical(df[TARGET_COL], nlabels)
     else:
         targets = None
-    
+
     return features, targets
 
 
-
 def load_dataset(dataset_dir, batch_size):
-
     # Read train dataset (and maybe dev, if you need to...)
     dataset, dev_dataset = train_test_split(
         pandas.read_csv(os.path.join(dataset_dir, 'train.csv')), test_size=0.2)
-    
+
     test_dataset = pandas.read_csv(os.path.join(dataset_dir, 'test.csv'))
-    
+
     print('Training samples {}, test_samples {}'.format(
         dataset.shape[0], test_dataset.shape[0]))
-    
+
     return dataset, dev_dataset, test_dataset
 
 
@@ -94,7 +91,7 @@ def main():
     args = read_args()
     dataset, dev_dataset, test_dataset = load_dataset(args.dataset_dir, args.batch_size)
     nlabels = dataset[TARGET_COL].unique().shape[0]
-    
+
     # It's important to always use the same one-hot length
     one_hot_columns = {
         one_hot_col: dataset[one_hot_col].max()
@@ -105,12 +102,12 @@ def main():
         for embedded_col in ['Breed1']
     }
     numeric_columns = ['Age', 'Fee']
-    
+
     # TODO (optional) put these three types of columns in the same dictionary with "column types"
     X_train, y_train = process_features(dataset, one_hot_columns, numeric_columns, embedded_columns)
     direct_features_input_shape = (X_train['direct_features'].shape[1],)
     X_dev, y_dev = process_features(dev_dataset, one_hot_columns, numeric_columns, embedded_columns)
-    
+
     # Create the tensorflow Dataset
     batch_size = 32
     # TODO shuffle the train dataset!
@@ -120,12 +117,25 @@ def main():
         test_dataset, one_hot_columns, numeric_columns, embedded_columns, test=True)[0]).batch(batch_size)
 
     # TODO: Build the Keras model
+    embedding_layers = []
     inputs = []
+    for embedded_col, max_value in embedded_columns.items():
+        input_layer = layers.Input(shape=(1,), name=embedded_col)
+        inputs.append(input_layer)
+        # Define the embedding layer
+        embedding_size = int(max_value / 4)
+        embedding_layers.append(
+            tf.squeeze(layers.Embedding(input_dim=max_value, output_dim=embedding_size)(input_layer), axis=-2))
+        print('Adding embedding of size {} for layer {}'.format(embedding_size, embedded_col))
 
     hidden_layer_size = 64
 
     direct_features_input = layers.Input(shape=direct_features_input_shape, name='direct_features')
-    dense1 = layers.Dense(hidden_layer_size, activation='relu')(direct_features_input)
+
+    # Concatenate everything together
+    features = layers.concatenate(embedding_layers + [direct_features_input])
+
+    dense1 = layers.Dense(hidden_layer_size, activation='relu')(features)
 
     output_layer = layers.Dense(nlabels, activation='softmax')(dense1)
 
@@ -143,7 +153,7 @@ def main():
     model = models.Model(inputs=inputs, outputs=output_layer)
 
     model.compile(loss='categorical_crossentropy',
-                metrics=['accuracy'])
+                  metrics=['accuracy'])
 
     # TODO: Fit the model
     mlflow.set_experiment(args.experiment_name)
@@ -160,7 +170,9 @@ def main():
         history = model.fit(train_ds, epochs=args.epochs)
 
         # TODO: analyze history to see if model converges/overfits
-        
+        print("HISTORY:")
+        print(history)
+
         # TODO: Evaluate the model, calculating the metrics.
         # Option 1: Use the model.evaluate() method. For this, the model must be
         # already compiled with the metrics.
@@ -171,7 +183,7 @@ def main():
         print("*** Dev loss: {} - accuracy: {}".format(loss, accuracy))
         mlflow.log_metric('loss', loss)
         mlflow.log_metric('accuracy', accuracy)
-        
+
         # Option 2: Use the model.predict() method and calculate the metrics using
         # sklearn. We recommend this, because you can store the predictions if
         # you need more analysis later. Also, if you calculate the metrics on a
@@ -185,7 +197,7 @@ def main():
         # ...
         print(predictions)
 
-        
+
 print('All operations completed')
 
 if __name__ == '__main__':
