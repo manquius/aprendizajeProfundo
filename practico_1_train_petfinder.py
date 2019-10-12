@@ -120,14 +120,30 @@ def main():
         test_dataset, one_hot_columns, numeric_columns, embedded_columns, test=True)[0]).batch(batch_size)
 
     # TODO: Build the Keras model
-    model = tf.keras.Sequential([
-        layers.Dense(10, input_shape=(10,), batch_size=batch_size, activation=tf.nn.relu),
+    inputs = []
+
+    hidden_layer_size = 64
+
+    direct_features_input = layers.Input(shape=direct_features_input_shape, name='direct_features')
+    dense1 = layers.Dense(hidden_layer_size, activation='relu')(direct_features_input)
+
+    output_layer = layers.Dense(nlabels, activation='softmax')(dense1)
+
+    '''model = tf.keras.Sequential([
+        layers.Dense(10, input_shape=direct_features_input_shape,
+                     activation=tf.nn.relu, name='direct_features'),
         layers.BatchNormalization(momentum=0),
         layers.Dropout(0.5),
         layers.Dense(10, activation='softmax')
     ])
+    '''
+
+    inputs.append(direct_features_input)
+
+    model = models.Model(inputs=inputs, outputs=output_layer)
+
     model.compile(loss='categorical_crossentropy',
-              metrics=['accuracy'])
+                metrics=['accuracy'])
 
     # TODO: Fit the model
     mlflow.set_experiment(args.experiment_name)
@@ -160,9 +176,9 @@ def main():
         # sklearn. We recommend this, because you can store the predictions if
         # you need more analysis later. Also, if you calculate the metrics on a
         # notebook, then you can compare multiple classifiers.
-        
-        predictions = 'No prediction yet'
-        # predictions = model.predict(test_ds)
+
+        # predictions = 'No prediction yet'
+        predictions = model.predict(test_ds)
 
         # TODO: Convert predictions to classes
         # TODO: Save the results for submission
