@@ -48,17 +48,24 @@ def read_args():
 
 def process_features(df, one_hot_columns, numeric_columns, embedded_columns, test=False):
     direct_features = []
+    numeric_features = []
 
     # Create one hot encodings
     for one_hot_col, max_value in one_hot_columns.items():
         direct_features.append(tf.keras.utils.to_categorical(df[one_hot_col] - 1, max_value))
 
-    # TODO Create and append numeric columns
-    # Don't forget to normalize!
-    # ....
+    # Create and append numeric columns
+
+    for numeric_col in numeric_columns:
+        numeric_features.append(tf.keras.utils.normalize(df[numeric_col].to_numpy()))
 
     # Concatenate all features that don't need further embedding into a single matrix.
-    features = {'direct_features': numpy.hstack(direct_features)}
+    features = {'direct_features': numpy.hstack(direct_features),
+                'numeric_features': numpy.asarray(numeric_features)}
+
+    x_shape = features['direct_features'].shape[0]
+    size = features['numeric_features'].size
+    features['numeric_features'] = features['numeric_features'].reshape(x_shape, int(size / x_shape))
 
     # Create embedding columns - nothing to do here. We will use the zero embedding for OOV
     for embedded_col in embedded_columns.keys():
