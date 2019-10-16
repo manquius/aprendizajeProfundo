@@ -108,7 +108,10 @@ def main():
         embedded_col: dataset[embedded_col].max() + 1
         for embedded_col in ['Breed1']
     }
-    numeric_columns = ['Age', 'Fee']
+    numeric_columns = {
+        numeric_col: dataset[numeric_col].max() + 1
+        for numeric_col in ['Age', 'Fee']
+    }
 
     # TODO (optional) put these three types of columns in the same dictionary with "column types"
     X_train, y_train = process_features(dataset, one_hot_columns, numeric_columns, embedded_columns)
@@ -125,6 +128,7 @@ def main():
 
     # TODO: Build the Keras model
     embedding_layers = []
+    numeric_layers = []
     inputs = []
     for embedded_col, max_value in embedded_columns.items():
         input_layer = layers.Input(shape=(1,), name=embedded_col)
@@ -139,23 +143,23 @@ def main():
 
     direct_features_input = layers.Input(shape=direct_features_input_shape, name='direct_features')
 
+    for numeric_col, max_value in numeric_columns.items():
+        input_layer = layers.Input(shape=(1,), name=numeric_col)
+        inputs.append(input_layer)
+        # Define the numeric layer
+        numeric_size = int(max_value / 4)
+        numeric_layers.append(input_layer)
+        print('Adding numeric of size {} for layer {}'.format(numeric_size, numeric_col))
+
     # Concatenate everything together
-    features = layers.concatenate(embedding_layers + [direct_features_input])
+    features = layers.concatenate(embedding_layers + numeric_layers + [direct_features_input])
 
     dense1 = layers.Dense(hidden_layer_size, activation='relu')(features)
 
     output_layer = layers.Dense(nlabels, activation='softmax')(dense1)
 
-    '''model = tf.keras.Sequential([
-        layers.Dense(10, input_shape=direct_features_input_shape,
-                     activation=tf.nn.relu, name='direct_features'),
-        layers.BatchNormalization(momentum=0),
-        layers.Dropout(0.5),
-        layers.Dense(10, activation='softmax')
-    ])
-    '''
 
-    inputs.append(direct_features_input)
+    inputs.append(features)
 
     model = models.Model(inputs=inputs, outputs=output_layer)
 
