@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/femancus/Documents/Workspace/diplodatos/TPs/aprendizajeProfundo/mlruns/1/1e08a5c426504094b7d85b9ef90b8a9c/artifacts
+end_time: 1570808776397
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: active
+name: ''
+run_id: 1e08a5c426504094b7d85b9ef90b8a9c
+run_uuid: 1e08a5c426504094b7d85b9ef90b8a9c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1570808776002
+status: 4
+tags: []
+user_id: femancus
