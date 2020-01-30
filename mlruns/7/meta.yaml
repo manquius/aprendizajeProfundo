@@ -1,0 +1,4 @@
+artifact_location: file:///C:/Users/femancus/Documents/Workspace/diplodatos/TPs/aprendizajeProfundo/mlruns/7
+experiment_id: '7'
+lifecycle_stage: active
+name: fullOneHotEncoding
